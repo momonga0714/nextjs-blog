@@ -1,5 +1,11 @@
 name: Deploy to GitHub Pages
 
+# ↓ ここを追加
+permissions:
+  contents: read # ソースコードのチェックアウトに必要
+  pages: write # GitHub Pages（gh-pagesブランチ）への書き込み権限
+  id-token: write # （必要なら）
+
 on:
   push:
     branches:
@@ -27,6 +33,6 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }} # ← これが必須
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./out
