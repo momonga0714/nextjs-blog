@@ -1,0 +1,39 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master  # もしくは main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ソースコードをチェックアウト
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Node.js をセットアップ
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # 依存関係をインストール
+      - name: Install dependencies
+        run: npm ci
+
+      # ビルド & 静的エクスポート
+      - name: Build & Export
+        run: |
+          npm run build
+          npm run export
+
+      # gh-pages ブランチにデプロイ
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          # リポジトリの GITHUB_TOKEN が自動的に使われる
+          publish_branch: gh-pages
+          publish_dir: ./out
