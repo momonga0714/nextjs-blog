@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'export',
   basePath: '/nextjs-blog',
+  assetPrefix: '/nextjs-blog/',
+  trailingSlash: true,
 };
 
 export default nextConfig;

@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "generate": "node --loader ts-node/esm --experimental-specifier-resolution=node scripts/generate-post.ts",
-    "deploy": "npm run build && npx gh-pages -d out"
+    "deploy": "npm ci && npm run build && npx gh-pages -d out"
   },
   "dependencies": {
     "dotenv": "^16.5.0",
