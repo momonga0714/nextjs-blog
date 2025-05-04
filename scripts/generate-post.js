@@ -133,16 +133,6 @@ async function main() {
   }
 
   // Git コミット & プッシュ
-  const { execSync } = await import('child_process');
-  try {
-    execSync('git add posts', { stdio: 'inherit' });
-    execSync(`git commit -m "chore: auto-gen posts for ${date}"`, {
-      stdio: 'inherit',
-    });
-    execSync('git push origin master', { stdio: 'inherit' });
-  } catch {
-    // コミットなしでも続行
-  }
 }
 
 main().catch((err) => {
