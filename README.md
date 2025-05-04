@@ -1,40 +1,137 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Next.js ブログ自動生成ツール
 
-## Getting Started
+このリポジトリは、Next.js と TypeScript をベースにしたブログアプリケーションです。OpenAI API を使って毎日自動で Markdown 記事を生成し、GitHub Actions を通じてスケジュール実行と公開までを一貫して自動化します。
 
-First, run the development server:
+---
+
+## 主な機能
+
+* **Next.js**（TypeScript）を利用したモダンなブログ構成
+* **MDX** で記事執筆・管理（`posts/*.md`）
+* **OpenAI** SDK を通じた AI 記事自動生成スクリプト（`scripts/generate-post.ts`）
+* **ユーティリティ関数** によるプロンプト・FrontMatter 出力の整理（`scripts/utils/`）
+* **GitHub Actions** で毎日定刻に生成→コミット→プッシュを自動実行（`.github/workflows/auto-generate.yml`）
+
+---
+
+## 目次
+
+1. [前提条件](#前提条件)
+2. [インストール](#インストール)
+3. [ローカル開発](#ローカル開発)
+4. [記事生成](#記事生成)
+
+   * [手動実行](#手動実行)
+   * [自動実行 (CI)](#自動実行-ci)
+5. [フォルダ構成](#フォルダ構成)
+6. [利用可能なスクリプト](#利用可能なスクリプト)
+7. [コントリビューション](#コントリビューション)
+8. [ライセンス](#ライセンス)
+
+---
+
+## 前提条件
+
+* Node.js v18 以上
+* npm または yarn
+* OpenAI API キー（`.env.local` に設定）
+
+---
+
+## インストール
+
+```bash
+git clone https://github.com/momonga0714/nextjs-blog.git
+cd nextjs-blog
+npm ci
+```
+
+プロジェクトルートに `.env.local` を作成し、以下を追加してください：
+
+```ini
+OPENAI_API_KEY=あなたの_API_KEY
+OPENAI_MODEL=gpt-4
+```
+
+---
+
+## ローカル開発
+
+Next.js の開発サーバーを起動します：
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いて確認できます。
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+---
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+## 記事生成
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+### 手動実行
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+AI を利用した記事生成スクリプトを手動で動かすには：
 
-## Learn More
+```bash
+npm run generate
+```
 
-To learn more about Next.js, take a look at the following resources:
+このコマンドは `ts-node` で `scripts/generate-post.ts` を実行し、以下を行います：
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+1. 今日のテーマと昨日の記事を判定
+2. OpenAI に渡すプロンプトを組み立て（先頭 H1 を除去）
+3. `posts/` に Markdown ファイルを出力（FrontMatter 付き）
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 自動実行 (CI)
 
-## Deploy on Vercel
+GitHub Actions ワークフロー（`.github/workflows/auto-generate.yml`）で毎日定刻に以下を実行します：
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. リポジトリのチェックアウト
+2. 依存関係のインストール
+3. `npm run generate` の実行
+4. 生成された記事をコミット & プッシュ
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+---
+
+## フォルダ構成
+
+```
+nextjs-blog/
+├── .github/
+│   └── workflows/           # GitHub Actions 設定
+├── pages/                   # Next.js ページコンポーネント
+├── posts/                   # 自動生成された Markdown 記事
+├── public/                  # 静的ファイル
+├── scripts/
+│   ├── generate-post.ts     # 記事生成メインスクリプト
+│   └── utils/               # プロンプト・FrontMatter 生成ユーティリティ
+├── styles/                  # グローバル CSS
+├── tsconfig.json            # TypeScript 設定
+├── next.config.ts           # Next.js 設定
+└── package.json             # スクリプト & 依存定義
+```
+
+---
+
+## 利用可能なスクリプト
+
+| コマンド               | 説明                      |
+| ------------------ | ----------------------- |
+| `npm run dev`      | 開発モードで Next.js を起動      |
+| `npm run build`    | 本番用ビルドの作成               |
+| `npm run start`    | 本番モードで起動                |
+| `npm run lint`     | ESLint を実行              |
+| `npm run generate` | AI で記事を生成し `posts/` へ出力 |
+
+---
+
+## コントリビューション
+
+バグ報告や機能要望、プルリクエストは大歓迎です。Issue を立てるか、Pull Request をお送りください。
+
+---
+
+## ライセンス
+
+このプロジェクトは [MIT ライセンス](LICENSE) の下で公開されています。
