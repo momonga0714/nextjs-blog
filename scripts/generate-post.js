@@ -27,7 +27,7 @@ const levelLabels = {
 // 日付と今日のテーマ
 const today = new Date();
 const date = today.toISOString().slice(0, 10);
-const theme = themes[today.getDate() % themes.length];
+const theme = themes[(today.getDate() - 1) % themes.length];
 
 // OpenAI クライアント設定
 const modelName = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
@@ -97,7 +97,6 @@ async function generateForLevel(level) {
     `---\n` +
     `title: "${theme}（${date}"\n` +
     `date: "${date}"\n` +
-    `description: "${theme} の自動生成記事 (${label})"\n` +
     `difficulty: "${level}"\n` +
     `---\n\n`;
 
