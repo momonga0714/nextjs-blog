@@ -24,7 +24,7 @@ const levelLabels = {
   advanced: '上級者向け',
 };
 
-// 日付と今日のテーマ
+// 日付と今日のテーマ（1日→themes[0], 2日→themes[1], …）
 const today = new Date();
 const date = today.toISOString().slice(0, 10);
 const theme = themes[(today.getDate() - 1) % themes.length];
@@ -40,22 +40,39 @@ const openai = new OpenAI({ apiKey });
 
 async function generateForLevel(level) {
   const label = levelLabels[level];
+
+  // ── 追加部分：昨日の記事を探す ──
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yDate = yesterday.toISOString().slice(0, 10);
+  const yTheme = themes[(yesterday.getDate() - 1) % themes.length];
+  const yFilename = path.join(
+    'posts',
+    `${yTheme.replace(/[^a-zA-Z0-9]/g, '-')}-${level}.md`
+  );
+  let yesterdayContent = '';
+  if (fs.existsSync(yFilename)) {
+    yesterdayContent = fs.readFileSync(yFilename, 'utf8');
+  }
+  // ─────────────────────────────────
+
   const filename = path.join(
     'posts',
     `${theme.replace(/[^a-zA-Z0-9]/g, '-')}-${level}.md`
   );
   let body;
 
-  // 初回生成 or 深掘り
   if (!fs.existsSync(filename)) {
-    // テーマと難易度に応じたプロンプト（先頭見出し不要を明記）
+    // 初回生成プロンプトに昨日の記事を追加
     const prompt =
       `以下のルールに従って、${label}に、Markdown形式で日本語約400字の記事を生成してください。\n\n` +
       `# ルール\n` +
       `1. テーマ：「${theme}」\n` +
       `2. 難易度：${label}\n` +
       `3. 長さ：日本語400字前後\n\n` +
-      `※**タイトルの見出し（# で始まる行）は不要です。本文のみを出力してください。**\n` +
+      `※**昨日 (${yDate}) の記事を参考に品質を向上してください：**\n` +
+      `${yesterdayContent}\n\n` +
+      `※タイトル見出し（# で始まる行）は不要です。本文のみを出力してください。\n` +
       `記事本文をここから始めてください。`;
 
     const res = await openai.chat.completions.create({
@@ -70,14 +87,15 @@ async function generateForLevel(level) {
       temperature: 0.7,
     });
 
-    // 万が一先頭に '# …' が残っていたら除去
     body = res.choices[0].message.content.trim().replace(/^#.*\n+/, '');
   } else {
-    // 深掘りプロンプトにも先頭見出し不要を明記
+    // 深掘りプロンプトにも昨日の記事を追加
     const previous = fs.readFileSync(filename, 'utf8');
     const deepenPrompt =
-      `以下のMarkdown記事を読み込み、具体例や詳細を追加して内容をさらに深掘りしてください。記事全体を更新してください。\n\n` +
-      `※**先頭の見出し（# …）はそのまま残さず、本文部分のみで更新してください。**\n\n` +
+      `以下のMarkdown記事を読み込み、具体例や詳細を追加して内容をさらに深掘りしてください。\n\n` +
+      `※**昨日 (${yDate}) の記事を参考に品質を向上してください：**\n` +
+      `${yesterdayContent}\n\n` +
+      `※先頭見出し（# …）は残さず、本文部分のみで更新してください。\n\n` +
       previous;
 
     const res2 = await openai.chat.completions.create({
@@ -92,22 +110,20 @@ async function generateForLevel(level) {
     body = res2.choices[0].message.content.trim().replace(/^#.*\n+/, '');
   }
 
-  // Front Matter を付与
+  // Front Matter を付与（タイトルにラベルは含めず、difficulty のみメタ情報として残す）
   const frontMatter =
     `---\n` +
-    `title: "${theme}（${date}"\n` +
+    `title: "${theme}（${date})"\n` +
     `date: "${date}"\n` +
     `difficulty: "${level}"\n` +
     `---\n\n`;
 
-  // Markdown ファイルを更新
   fs.writeFileSync(filename, frontMatter + body + '\n', 'utf8');
   console.log(`✅ ${filename} を生成/更新しました`);
   return filename;
 }
 
 async function main() {
-  // 全難易度を順に処理
   for (const level of levels) {
     try {
       await generateForLevel(level);
