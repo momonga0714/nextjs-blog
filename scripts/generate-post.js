@@ -16,13 +16,12 @@ const themes = [
   '投資の税金について',
 ];
 
-// 難易度レベルと日本語ラベル
-const levels = ['beginner', 'intermediate', 'advanced'];
-const levelLabels = {
-  beginner: '初心者向け',
-  intermediate: '中級者向け',
-  advanced: '上級者向け',
-};
+// 難易度ごとに key と label を一つの配列で管理
+const levels = [
+  { key: 'beginner', label: '初心者向け' },
+  { key: 'intermediate', label: '中級者向け' },
+  { key: 'advanced', label: '上級者向け' },
+];
 
 // 日付と今日のテーマ（1日→themes[0], 2日→themes[1], …）
 const today = new Date();
@@ -38,9 +37,11 @@ if (!apiKey) {
 }
 const openai = new OpenAI({ apiKey });
 
-async function generateForLevel(level) {
-  const label = levelLabels[level];
-
+/**
+ * @param {'beginner'|'intermediate'|'advanced'} level
+ * @param {string} label
+ */
+async function generateForLevel(level, label) {
   // ── 追加部分：昨日の記事を探す ──
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
@@ -120,19 +121,16 @@ async function generateForLevel(level) {
 
   fs.writeFileSync(filename, frontMatter + body + '\n', 'utf8');
   console.log(`✅ ${filename} を生成/更新しました`);
-  return filename;
 }
 
 async function main() {
-  for (const level of levels) {
+  for (const { key: level, label } of levels) {
     try {
-      await generateForLevel(level);
+      await generateForLevel(level, label);
     } catch (err) {
       console.error(`Error generating ${level}:`, err);
     }
   }
-
-  // Git コミット & プッシュ
 }
 
 main().catch((err) => {
