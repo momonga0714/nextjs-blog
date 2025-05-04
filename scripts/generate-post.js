@@ -16,14 +16,20 @@ const themes = [
   '投資の税金について',
 ];
 
-// 難易度レベル
+// 難易度レベルと日本語ラベル
 const levels = ['beginner', 'intermediate', 'advanced'];
+const levelLabels = {
+  beginner: '初心者向け',
+  intermediate: '中級者向け',
+  advanced: '上級者向け',
+};
 
+// 日付と今日のテーマ
 const today = new Date();
 const date = today.toISOString().slice(0, 10);
 const theme = themes[today.getDate() % themes.length];
 
-// OpenAI クライアント
+// OpenAI クライアント設定
 const modelName = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
@@ -33,35 +39,23 @@ if (!apiKey) {
 const openai = new OpenAI({ apiKey });
 
 async function generateForLevel(level) {
-  const filename = path.join('posts', `${date}-${level}.md`);
+  const label = levelLabels[level];
+  // ファイル名をテーマベースに変更
+  const filename = path.join(
+    'posts',
+    `${theme.replace(/[^a-zA-Z0-9]/g, '-')}-${level}.md`
+  );
   let body;
 
   // 初回生成 or 深掘り
   if (!fs.existsSync(filename)) {
     // テーマと難易度に応じたプロンプト
     const prompt =
-      `以下のルールに従って、${
-        level === 'beginner'
-          ? '初心者向け'
-          : level === 'intermediate'
-          ? '中級者向け'
-          : '上級者向け'
-      }に、Markdown形式で日本語約400字の記事を生成してください。\n\n` +
+      `以下のルールに従って、${label}に、Markdown形式で日本語約400字の記事を生成してください。\n\n` +
       `# ルール\n` +
       `1. テーマ：「${theme}」\n` +
-      `2. 難易度：${
-        level === 'beginner'
-          ? '初心者'
-          : level === 'intermediate'
-          ? '中級者'
-          : '上級者'
-      }向け\n` +
+      `2. 難易度：${label}\n` +
       `3. 長さ：日本語400字前後\n` +
-      `4. Front Matterを記事冒頭に:---\\n` +
-      `title: "${theme}（${date}） - ${level}向け"\\n` +
-      `date: "${date}"\\n` +
-      `description: "${theme} の自動生成記事 (${level}向け)"\\n` +
-      `---\\n\\n` +
       `記事本文をここから始めてください。`;
 
     const res = await openai.chat.completions.create({
@@ -91,34 +85,41 @@ async function generateForLevel(level) {
     body = res2.choices[0].message.content.trim();
   }
 
+  // Front Matter を付与
+  const frontMatter =
+    `---\n` +
+    `title: "${theme}（${date}） - ${label}"\n` +
+    `date: "${date}"\n` +
+    `description: "${theme} の自動生成記事 (${label})"\n` +
+    `difficulty: "${level}"\n` +
+    `---\n\n`;
+
   // Markdown ファイルを更新
-  fs.writeFileSync(filename, body + '\n', 'utf8');
+  fs.writeFileSync(filename, frontMatter + body + '\n', 'utf8');
   console.log(`✅ ${filename} を生成/更新しました`);
   return filename;
 }
 
 async function main() {
-  // 全難易度を処理
-  const generated = [];
+  // 全難易度を順に処理
   for (const level of levels) {
     try {
-      const file = await generateForLevel(level);
-      generated.push(file);
+      await generateForLevel(level);
     } catch (err) {
       console.error(`Error generating ${level}:`, err);
     }
   }
 
-  // Git 操作
+  // Git コミット & プッシュ
   const { execSync } = await import('child_process');
   try {
     execSync('git add posts', { stdio: 'inherit' });
-    execSync(`git commit -m "chore: auto-gen posts for ${date}"`, {
+    execSync(`git commit -m \"chore: auto-gen posts for ${date}\"`, {
       stdio: 'inherit',
     });
     execSync('git push origin master', { stdio: 'inherit' });
   } catch {
-    // 既にコミット済みなどはスキップ
+    // コミットなしでも続行
   }
 }
 
