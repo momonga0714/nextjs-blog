@@ -28,7 +28,7 @@ jobs:
 
       # 4. 記事自動生成スクリプトを実行
       - name: Generate posts
-        run: node scripts/generate-post.js
+        run: npm run generate
 
       # 5. 変更の検出とコミット（変更があれば）
       - name: Commit & Push changes
