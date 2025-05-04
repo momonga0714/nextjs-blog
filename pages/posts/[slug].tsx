@@ -51,7 +51,7 @@ export default function PostPage({ source, frontMatter }: PostPageProps) {
   return (
     <>
       <Head>
-        <title>{frontMatter.title} | マイブログ</title>
+        <title>{`${frontMatter.title} | マイブログ`}</title>
         <meta name="description" content={frontMatter.description} />
       </Head>
       <main className="container">

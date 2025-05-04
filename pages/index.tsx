@@ -9,9 +9,9 @@ type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 
 // 英語キーを日本語ラベルにマッピング
 const difficultyLabels: Record<Difficulty, string> = {
-  beginner: '初心者向け投稿一覧',
-  intermediate: '中級者向け投稿一覧',
-  advanced: '上級者向け投稿一覧',
+  beginner: '初級者',
+  intermediate: '中級者',
+  advanced: '上級者',
 };
 
 interface PostMeta {
@@ -96,10 +96,10 @@ export default function Home({
     <>
       <Head>
         <title>マイブログ</title>
-        <meta name="description" content="難易度別投稿一覧" />
+        <meta name="description" content="記事一覧" />
       </Head>
       <main className="container">
-        <h1>難易度別投稿一覧</h1>
+        <h1>記事一覧</h1>
         {renderSection(beginnerPosts)}
         {renderSection(intermediatePosts)}
         {renderSection(advancedPosts)}

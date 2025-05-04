@@ -40,7 +40,6 @@ const openai = new OpenAI({ apiKey });
 
 async function generateForLevel(level) {
   const label = levelLabels[level];
-  // ファイル名をテーマベースに変更
   const filename = path.join(
     'posts',
     `${theme.replace(/[^a-zA-Z0-9]/g, '-')}-${level}.md`
@@ -49,13 +48,14 @@ async function generateForLevel(level) {
 
   // 初回生成 or 深掘り
   if (!fs.existsSync(filename)) {
-    // テーマと難易度に応じたプロンプト
+    // テーマと難易度に応じたプロンプト（先頭見出し不要を明記）
     const prompt =
       `以下のルールに従って、${label}に、Markdown形式で日本語約400字の記事を生成してください。\n\n` +
       `# ルール\n` +
       `1. テーマ：「${theme}」\n` +
       `2. 難易度：${label}\n` +
-      `3. 長さ：日本語400字前後\n` +
+      `3. 長さ：日本語400字前後\n\n` +
+      `※**タイトルの見出し（# で始まる行）は不要です。本文のみを出力してください。**\n` +
       `記事本文をここから始めてください。`;
 
     const res = await openai.chat.completions.create({
@@ -69,11 +69,17 @@ async function generateForLevel(level) {
       ],
       temperature: 0.7,
     });
-    body = res.choices[0].message.content.trim();
+
+    // 万が一先頭に '# …' が残っていたら除去
+    body = res.choices[0].message.content.trim().replace(/^#.*\n+/, '');
   } else {
-    // 深掘りプロンプト
+    // 深掘りプロンプトにも先頭見出し不要を明記
     const previous = fs.readFileSync(filename, 'utf8');
-    const deepenPrompt = `以下のMarkdown記事を読み込み、具体例や詳細を追加して内容をさらに深掘りしてください。記事全体を更新してください。\n\n${previous}`;
+    const deepenPrompt =
+      `以下のMarkdown記事を読み込み、具体例や詳細を追加して内容をさらに深掘りしてください。記事全体を更新してください。\n\n` +
+      `※**先頭の見出し（# …）はそのまま残さず、本文部分のみで更新してください。**\n\n` +
+      previous;
+
     const res2 = await openai.chat.completions.create({
       model: modelName,
       messages: [
@@ -82,13 +88,14 @@ async function generateForLevel(level) {
       ],
       temperature: 0.7,
     });
-    body = res2.choices[0].message.content.trim();
+
+    body = res2.choices[0].message.content.trim().replace(/^#.*\n+/, '');
   }
 
   // Front Matter を付与
   const frontMatter =
     `---\n` +
-    `title: "${theme}（${date}） - ${label}"\n` +
+    `title: "${theme}（${date}"\n` +
     `date: "${date}"\n` +
     `description: "${theme} の自動生成記事 (${label})"\n` +
     `difficulty: "${level}"\n` +
@@ -114,7 +121,7 @@ async function main() {
   const { execSync } = await import('child_process');
   try {
     execSync('git add posts', { stdio: 'inherit' });
-    execSync(`git commit -m \"chore: auto-gen posts for ${date}\"`, {
+    execSync(`git commit -m "chore: auto-gen posts for ${date}"`, {
       stdio: 'inherit',
     });
     execSync('git push origin master', { stdio: 'inherit' });
