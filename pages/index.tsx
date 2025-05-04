@@ -9,76 +9,52 @@ interface PostMeta {
   slug: string;
   title: string;
   date: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
 }
 
 interface HomeProps {
-  beginnerPosts: PostMeta[];
-  intermediatePosts: PostMeta[];
-  advancedPosts: PostMeta[];
+  posts: PostMeta[];
 }
 
 export const getStaticProps = async () => {
   const postsDir = path.join(process.cwd(), 'posts');
   const files = fs.readdirSync(postsDir).filter((f) => f.endsWith('.md'));
-  const beginner: PostMeta[] = [];
-  const intermediate: PostMeta[] = [];
-  const advanced: PostMeta[] = [];
+  const posts: PostMeta[] = files
+    .map((fileName) => {
+      const slug = fileName.replace(/\.md$/, '');
+      const fullPath = path.join(postsDir, fileName);
+      const fileContents = fs.readFileSync(fullPath, 'utf8');
+      const { data } = matter(fileContents);
+      return {
+        slug,
+        title: data.title as string,
+        date: data.date as string,
+      };
+    })
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
 
-  files.forEach((fileName) => {
-    const slug = fileName.replace(/\.md$/, '');
-    const fullPath = path.join(postsDir, fileName);
-    const fileContents = fs.readFileSync(fullPath, 'utf8');
-    const { data } = matter(fileContents);
-    const post: PostMeta = {
-      slug,
-      title: data.title as string,
-      date: data.date as string,
-      difficulty: data.difficulty as 'beginner' | 'intermediate' | 'advanced',
-    };
-    if (post.difficulty === 'beginner') beginner.push(post);
-    else if (post.difficulty === 'intermediate') intermediate.push(post);
-    else if (post.difficulty === 'advanced') advanced.push(post);
-  });
-
-  return {
-    props: {
-      beginnerPosts: beginner,
-      intermediatePosts: intermediate,
-      advancedPosts: advanced,
-    },
-  };
+  return { props: { posts } };
 };
 
-export default function Home({
-  beginnerPosts,
-  intermediatePosts,
-  advancedPosts,
-}: HomeProps) {
-  const renderSection = (label: string, posts: PostMeta[]) => (
-    <section style={{ marginBottom: '2rem' }}>
-      <h2>{label}</h2>
-      <ul>
-        {posts.map(({ slug, title, date }) => (
-          <li key={slug}>
-            <Link href={`/posts/${slug}`}>{title}</Link> <small>({date})</small>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-
+export default function Home({ posts }: HomeProps) {
   return (
     <>
       <Head>
         <title>マイブログ</title>
-        <meta name="description" content="難易度別投稿一覧" />
+        <meta name="description" content="Next.js × GitHub Pages のブログ" />
       </Head>
       <main className="container">
-        <h1>難易度別投稿一覧</h1>
-        {renderSection('■ 初心者向け投稿一覧', beginnerPosts)}
-        {renderSection('■ 中級者向け投稿一覧', intermediatePosts)}
-        {renderSection('■ 上級者向け投稿一覧', advancedPosts)}
+        <header>
+          <h1>ブログ記事一覧</h1>
+          <p>私のブログへようこそ！最新の投稿をご覧ください。</p>
+        </header>
+        <ul className="post-list">
+          {posts.map(({ slug, title, date }) => (
+            <li key={slug}>
+              <Link href={`/posts/${slug}`}>{title}</Link>
+              <span className="date">{date}</span>
+            </li>
+          ))}
+        </ul>
       </main>
     </>
   );
