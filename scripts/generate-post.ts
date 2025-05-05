@@ -8,6 +8,7 @@ import OpenAI from 'openai';
 
 import { formatDate } from './utils/formatDate';
 import { getTheme } from './utils/getTheme';
+import { getJSTDate } from './utils/getJSTDate';
 import { loadArticleContent } from './utils/loadArticleContent';
 import { stripHeading } from './utils/stripHeading';
 import { buildFrontMatter } from './utils/buildFrontMatter';
@@ -37,7 +38,7 @@ if (!apiKey) {
 const openai = new OpenAI({ apiKey });
 
 const generateForLevel = async (level: LevelKey, label: string): Promise<void> => {
-  const today = new Date();
+  const today = getJSTDate();
   const todayStr = formatDate(today);
   const theme = getTheme(today);
 
