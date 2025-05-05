@@ -50,7 +50,7 @@ npm ci
 
 ```ini
 OPENAI_API_KEY=あなたの_API_KEY
-OPENAI_MODEL=gpt-4
+OPENAI_MODEL=gpt-3.5-turbo
 ```
 
 ---

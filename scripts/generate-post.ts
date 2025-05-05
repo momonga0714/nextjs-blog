@@ -29,7 +29,7 @@ const levels: Level[] = [
 ];
 
 // OpenAI クライアント設定
-const modelName = process.env.OPENAI_MODEL ?? 'gpt-3.5-turbo';
+const modelName = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
   console.error('Error: OPENAI_API_KEY が設定されていません。');
