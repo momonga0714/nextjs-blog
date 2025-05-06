@@ -4,6 +4,15 @@ import path from 'path';
 import matter from 'gray-matter';
 import Link from 'next/link';
 import Head from 'next/head';
+import React from 'react';
+
+import { Header } from '../components/Header';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 
 type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 
@@ -41,9 +50,7 @@ export const getStaticProps = async () => {
     const raw = fs.readFileSync(fullPath, 'utf8');
     const { data } = matter(raw);
 
-    // slug の末尾にくっつけたレベル文字列から難易度を取得
     const level = slug.split('-').pop() as Difficulty;
-
     const post: PostMeta = {
       slug,
       title: data.title as string,
@@ -56,7 +63,6 @@ export const getStaticProps = async () => {
     else if (level === 'advanced') advancedPosts.push(post);
   }
 
-  // 日付降順にソート
   const sortByDateDesc = (a: PostMeta, b: PostMeta) =>
     a.date < b.date ? 1 : -1;
 
@@ -78,16 +84,24 @@ export default function Home({
     if (posts.length === 0) return null;
     const label = difficultyLabels[posts[0].difficulty];
     return (
-      <section style={{ marginBottom: '2rem' }}>
-        <h2>{label}</h2>
-        <ul>
+      <section className="mb-12">
+        <h2 className="text-2xl font-semibold border-l-4 border-accent pl-2 mb-6">
+          {label}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map(({ slug, title, date }) => (
-            <li key={slug} style={{ marginBottom: '0.5rem' }}>
-              <Link href={`/posts/${slug}`}>{title}</Link>{' '}
-              <small>({date})</small>
-            </li>
+            <Link key={slug} href={`/posts/${slug}`} className="block">
+              <Card className="h-full hover:shadow-lg transition-shadow duration-200">
+                <CardHeader>
+                  <CardTitle className="text-lg">{title}</CardTitle>
+                  <CardDescription className="text-sm text-muted-foreground">
+                    {date}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
           ))}
-        </ul>
+        </div>
       </section>
     );
   };
@@ -98,8 +112,13 @@ export default function Home({
         <title>マイブログ</title>
         <meta name="description" content="記事一覧" />
       </Head>
-      <main className="container">
-        <h1>記事一覧</h1>
+      {/* ヘッダー */}
+      <Header />
+
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-red-500 text-white p-4 rounded">
+          Tailwind が効いていればこのボックスは赤くなります
+        </div>
         {renderSection(beginnerPosts)}
         {renderSection(intermediatePosts)}
         {renderSection(advancedPosts)}

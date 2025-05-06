@@ -1,11 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 /* Google Fonts の読み込み例 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
 @import 'tw-animate-css';
-
 
 /* リセット & ベース */
 *,
@@ -28,11 +25,11 @@ body {
 }
 
 /* コンテナ */
-.container {
+/* .container {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem 1rem;
-}
+} */
 
 /* ヘッダー */
 header {
